@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.demo.dba.dao.IMenuItemConfDao">
+    <resultMap id="BaseResultMap" type="com.demo.dba.entity.MenuItemConfEntity">
+        <id column="ID" property="id" jdbcType="DECIMAL"/>
+        <result column="NAME" property="name" jdbcType="VARCHAR"/>
+        <result column="HREF" property="href" jdbcType="VARCHAR"/>
+        <result column="TARGET" property="target" jdbcType="VARCHAR"/>
+        <result column="MASK" property="mask" jdbcType="CHAR"/>
+        <result column="WIDTH" property="width" jdbcType="DECIMAL"/>
+        <result column="HEIGHT" property="height" jdbcType="DECIMAL"/>
+        <result column="PARENT_ID" property="parentId" jdbcType="DECIMAL"/>
+        <result column="PARENT_NAME" property="parentName" jdbcType="VARCHAR"/>
+        <result column="SORT" property="sort" jdbcType="DECIMAL"/>
+        <result column="COLLAPSE" property="collapse" jdbcType="CHAR"/>
+        <result column="ICON_CLASS_NAME" property="iconClassName" jdbcType="VARCHAR"/>
+        <result column="CREATE_TIME" property="createTime" jdbcType="VARCHAR"/>
+        <result column="OPERATE_TYPE" property="operateType" jdbcType="DECIMAL"/>
+        <result column="STATUS" property="status" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        MIC.ID, MIC.NAME,MIC.HREF,MIC.TARGET,MIC.MASK,MIC.WIDTH,MIC.HEIGHT,
+        MIC.PARENT_ID,MIC.SORT,MIC.CREATE_TIME,MIC.COLLAPSE,MIC.ICON_CLASS_NAME,
+        MIC.OPERATE_TYPE,MIC.STATUS
+    </sql>
+    <sql id="Table_Name">MENU_ITEM_CONF MIC</sql>
+    <sql id="Where_Column_List">
+        <if test="id != null">
+            AND MIC.ID = #{id,jdbcType=DECIMAL}
+        </if>
+        <if test="name != null">
+            AND MIC.NAME LIKE  '%'|| #{name,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="href != null">
+            AND MIC.HREF = #{href,jdbcType=VARCHAR}
+        </if>
+        <if test="target != null">
+            AND MIC.TARGET = #{target,jdbcType=VARCHAR}
+        </if>
+        <if test="mask != null">
+            AND MIC.MASK = #{mask,jdbcType=CHAR}
+        </if>
+        <if test="width != null">
+            AND MIC.WIDTH = #{width,jdbcType=DECIMAL}
+        </if>
+        <if test="height != null">
+            AND MIC.HEIGHT = #{height,jdbcType=DECIMAL}
+        </if>
+        <if test="parentId != null">
+            AND MIC.PARENT_ID = #{parentId,jdbcType=DECIMAL}
+        </if>
+        <if test="sort != null">
+            AND MIC.SORT = #{sort,jdbcType=DECIMAL}
+        </if>
+        <if test="iconClassName != null">
+            AND MIC.ICON_CLASS_NAME = #{iconClassName,jdbcType=DECIMAL}
+        </if>
+        <if test="collapse != null">
+            AND MIC.COLLAPSE = #{collapse,jdbcType=DECIMAL}
+        </if>
+        <if test="createTime != null">
+            AND MIC.CREATE_TIME = #{createTime,jdbcType=VARCHAR}
+        </if>
+        <if test="operateType != null">
+            AND MIC.OPERATE_TYPE = #{operateType,jdbcType=DECIMAL}
+        </if>
+        <if test="status != null">AND MIC.STATUS = #{status,jdbcType=DECIMAL}</if>
+    </sql>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        SELECT <include refid="Base_Column_List"/>,NVL(MICP.NAME, '顶级菜单') AS PARENT_NAME
+        FROM MENU_ITEM_CONF MIC LEFT JOIN MENU_ITEM_CONF MICP
+        ON (MIC.PARENT_ID = MICP.ID)
+        where MIC.ID = #{id,jdbcType=DECIMAL}
+    </select>
+
+    <select id="listByEntity" parameterType="com.demo.dba.entity.MenuItemConfEntity" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM MENU_ITEM_CONF MIC
+        <where>
+            <include refid="Where_Column_List"/>
+        </where>
+    </select>
+    <select id="listMenuItemsFilterPermission" parameterType="java.util.List" resultMap="BaseResultMap">
+        SELECT DISTINCT
+        <include refid="Base_Column_List"/>
+        FROM MENU_ITEM_CONF MIC
+        START WITH MIC.ID IN
+        <foreach collection="list" separator="," open="(" item="id" close=")">
+            #{id,jdbcType=DECIMAL}
+        </foreach>
+        CONNECT BY MIC.ID = PRIOR MIC.PARENT_ID
+    </select>
+    <select id="pageSelect" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>,NVL(MICP.NAME, '顶级菜单') AS PARENT_NAME
+        FROM MENU_ITEM_CONF MIC LEFT JOIN MENU_ITEM_CONF MICP
+        ON (MIC.PARENT_ID = MICP.ID)
+        <where>
+            <include refid="Where_Column_List"/>
+            <if test="parentName != null">AND NVL(MICP.NAME, '顶级菜单') LIKE  '%'|| #{parentName,jdbcType=VARCHAR}||'%'</if>
+            AND MIC.STATUS &lt;&gt; #{statusNotEqualsTo,jdbcType=DECIMAL}
+
+        </where>
+    </select>
+    <select id="listAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM MENU_ITEM_CONF MIC
+    </select>
+    <select id="listByEnable$HrefIsNotNull$ExistsPerm" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/> FROM <include refid="Table_Name"/>
+        WHERE MIC.STATUS = #{status,jdbcType=DECIMAL} AND MIC.HREF IS NOT NULL AND
+        EXISTS( SELECT 1 FROM PERMISSION_CONF PC
+         WHERE PC.STATUS = #{status,jdbcType=DECIMAL} AND PC.menu_item_conf_id = MIC.ID
+          AND PC.OPERATE_TYPE IN
+        <foreach collection="operateTypes" close=")" item="item" open="(" separator=",">#{item}</foreach>)
+    </select>
+    <select id="listModuleByStatusAndOperateType" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/> FROM <include refid="Table_Name"/>
+        <where>
+            <include refid="Where_Column_List"/>
+        </where>
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" flushCache="true">
+        DELETE FROM MENU_ITEM_CONF WHERE ID = #{id,jdbcType=DECIMAL}
+    </delete>
+
+    <delete id="deleteByPrimaryKeys" parameterType="java.util.List">
+        DELETE FROM MENU_ITEM_CONF WHERE ID IN
+        <foreach collection="list" close=")" item="id" open="(" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insert" parameterType="com.demo.dba.entity.MenuItemConfEntity" flushCache="true">
+        <selectKey order="BEFORE" resultType="java.lang.Integer" keyProperty="id" keyColumn="ID">
+            SELECT ID.NEXTVAL AS ID FROM DUAL
+        </selectKey>
+        INSERT INTO MENU_ITEM_CONF
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            ID,
+            NAME,
+            HREF,
+            TARGET,
+            MASK,
+            WIDTH,
+            HEIGHT,
+            PARENT_ID,
+            COLLAPSE,
+            ICON_CLASS_NAME,
+            SORT,
+            OPERATE_TYPE,
+            STATUS
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            #{id,jdbcType=DECIMAL},
+            #{name,jdbcType=VARCHAR},
+            #{href,jdbcType=VARCHAR},
+            #{target,jdbcType=VARCHAR},
+            #{mask,jdbcType=CHAR},
+            #{width,jdbcType=DECIMAL},
+            #{height,jdbcType=DECIMAL},
+            #{parentId,jdbcType=DECIMAL},
+            #{collapse,jdbcType=CHAR},
+            #{iconClassName,jdbcType=VARCHAR},
+            #{sort,jdbcType=DECIMAL},
+            #{operateType,jdbcType=DECIMAL},
+            #{status,jdbcType=DECIMAL}
+        </trim>
+    </insert>
+    <update id="update" parameterType="com.demo.dba.entity.MenuItemConfEntity" flushCache="true">
+        UPDATE <include refid="Table_Name"/>
+        <set>
+            <if test="name != null">
+                MIC.NAME = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="href != null">
+                MIC.HREF = #{href,jdbcType=VARCHAR},
+            </if>
+            <if test="target != null">
+                MIC.TARGET = #{target,jdbcType=VARCHAR},
+            </if>
+            <if test="mask != null">
+                MIC.MASK = #{mask,jdbcType=CHAR},
+            </if>
+            <if test="width != null">
+                MIC.WIDTH = #{width,jdbcType=DECIMAL},
+            </if>
+            <if test="height != null">
+                MIC.HEIGHT = #{height,jdbcType=DECIMAL},
+            </if>
+            <if test="parentId != null">
+                MIC.PARENT_ID = #{parentId,jdbcType=DECIMAL},
+            </if>
+            <if test="sort != null">
+                MIC.SORT = #{sort,jdbcType=DECIMAL},
+            </if>
+            <if test="1 == 1">
+                MIC.COLLAPSE = #{collapse,jdbcType=CHAR},
+            </if>
+            <if test="iconClassName != null">
+                MIC.ICON_CLASS_NAME = #{iconClassName,jdbcType=VARCHAR},
+            </if>
+            <if test="operateType != null">
+                MIC.OPERATE_TYPE = #{operateType,jdbcType=DECIMAL},
+            </if>
+            <if test="status != null">
+                MIC.STATUS = #{status,jdbcType=DECIMAL},
+            </if>
+        </set>
+        where MIC.ID = #{id,jdbcType=DECIMAL}
+    </update>
+    <update id="updateOperateTypeAsSync" flushCache="true" parameterType="java.util.Map">
+        UPDATE <include refid="Table_Name"/> SET MIC.OPERATE_TYPE = #{updateOperateTypeResult,jdbcType=DECIMAL}
+        WHERE MIC.OPERATE_TYPE IN <foreach collection="operateTypes" separator="," open="(" item="item" close=")">#{item}</foreach>
+        AND MIC.HREF IS NOT NULL
+    </update>
+
+    <select id="getAllParentMenus" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT  <include refid="Base_Column_List"/>
+        FROM  MENU_ITEM_CONF MIC
+        WHERE MIC.PARENT_ID = 0
+    </select>
+
+    <select id="getSubMenusByParentId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT  <include refid="Base_Column_List"/>
+        FROM  MENU_ITEM_CONF MIC
+        WHERE MIC.PARENT_ID =   #{parentId,jdbcType=DECIMAL}
+
+    </select>
+
+    <select id="getContainSubParentMenus" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT  <include refid="Base_Column_List"/>
+        FROM  MENU_ITEM_CONF MIC
+        WHERE MIC.PARENT_ID =   0
+        AND MIC.id IN (SELECT MC.PARENT_ID FROM MENU_ITEM_CONF MC WHERE MC.PARENT_ID != 0)
+    </select>
+
+
+</mapper>
