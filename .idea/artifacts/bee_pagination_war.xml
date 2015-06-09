@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="bee_pagination:war">
+    <output-path>$PROJECT_DIR$/bee_pagination/target</output-path>
+    <root id="archive" name="bee_pagination-1.0-SNAPSHOT.war">
+      <element id="artifact" artifact-name="bee_pagination:war exploded" />
+    </root>
+  </artifact>
+</component>

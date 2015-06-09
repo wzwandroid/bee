@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/bee.iml" filepath="$PROJECT_DIR$/bee.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bee_admin/bee_admin.iml" filepath="$PROJECT_DIR$/bee_admin/bee_admin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bee_dba/bee_dba.iml" filepath="$PROJECT_DIR$/bee_dba/bee_dba.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bee_pagination/bee_pagination.iml" filepath="$PROJECT_DIR$/bee_pagination/bee_pagination.iml" />
+    </modules>
+  </component>
+</project>
